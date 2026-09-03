@@ -112,8 +112,7 @@ function animate() {
 
 # Helpers
 function _cle() {
-    #return;
-    system(PHP_OS_FAMILY === 'Windows' ? 'cls' : 'clear');
+    pclose(popen(PHP_OS_FAMILY === 'Windows' ? 'cls' : 'clear', 'w'));
 }
 function _clr() {
     if (!outTty()) return;

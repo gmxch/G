@@ -153,7 +153,7 @@ return (new class {
                         
                         $fau = $this->checkCF($this->headersCF, $fa, $fau);
                         
-                        _put('fau.html', $fau);
+                        #_put('fau.html', $fau);
                         if ($ban = $this->isBan($fau)) {
                             if (!$this->SLDONE) {
                                 $curr = $_c;
@@ -379,11 +379,11 @@ return (new class {
             $reff, Inf::$uagent, d: true
         );
         
-        /*
-        _put('img.png', $req['body']); #die;
-        unset($req['body']);
-        var_dump($req); die;
-        */
+        
+        #_put('img.png', $req['body']); #die;
+        #unset($req['body']);
+        #var_dump($req); die;
+        
         
         if (!empty($req) && $req !== 99) {
             
@@ -420,6 +420,7 @@ return (new class {
         
         if (!empty($img)) {
             #_put('img.png', $img); #die;
+            #var_dump($x_cap); die;
             
             $captype = $wtype ?? 'onlyfans';
             $cappart = $warna ?? $x_cap;
