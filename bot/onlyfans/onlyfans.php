@@ -382,7 +382,7 @@ return (new class {
         
         #_put('img.png', $req['body']); #die;
         #unset($req['body']);
-        #var_dump($req); die;
+        #var_dump($req['headers']); #die;
         
         
         if (!empty($req) && $req !== 99) {
@@ -416,9 +416,21 @@ return (new class {
                 'cnt' => (int)($req['headers']['x-captcha-target-count'][0] ?? 3)
             ];
             $setCAP = microtime(true);
+            
+            $trap = ($req['headers']["x-captcha-trap-key"][0] ?? '') && ($req['headers']["x-captcha-trap-val"][0] ?? '') ?? null;
         }
         
         if (!empty($img)) {
+            
+            $trapData = [];
+            if ($trap) {
+                $trapData = [
+                    $req['headers']["x-captcha-trap-key"][0] => $req['headers']["x-captcha-trap-val"][0],
+                    'captcha_instruction' => $x_cap['ins'],
+                    'captcha_target_count' => $x_cap['cnt']
+                ];
+            }
+            
             #_put('img.png', $img); #die;
             #var_dump($x_cap); die;
             
@@ -456,7 +468,7 @@ return (new class {
             }
             
             $waktu = (int)((microtime(true) - $setCAP) * 1000);
-            $bfp = $this->onfFPS(Inf::$uagent, $mdt, $waktu);
+            $bfp = $this->onfFPS(Inf::$uagent, $mdt, $waktu, $trapData);
             $powRes = SolveUtils::Pow($x_pow['salt'], $x_pow['diff']);
             
             return [
@@ -469,7 +481,7 @@ return (new class {
         return ['trouble' => 'reload'];
     }
     
-    public function onfFPS($ua, array $mouse, int $waktu) {
+    public function onfFPS($ua, array $mouse, int $waktu, $trap = []) {
         
         static $st = null;
         
@@ -478,7 +490,7 @@ return (new class {
             $st = 'st_'.substr($sth, 0, 8).substr($sth, 8, 8); 
         }
     
-        $hwDetails = [
+        $hwDetails = array_merge([
             'st' => $st,
             'gl' => $this->webglFingerprint['renderer'] ?? 'ANGLE (NVIDIA, NVIDIA GeForce RTX 3060, OpenGL 4.5)',
             'tz' => TIMEZONE(),
@@ -487,7 +499,7 @@ return (new class {
             'wd' => false,
             'chr' => true,
             'ua' => $ua
-        ];
+        ], ($trap ?? []));
     
         return base64_encode(json_encode([
             'solve_time_ms' => $waktu,
@@ -509,27 +521,6 @@ return (new class {
         for ($i = (strlen($str) - 1); $i >= 0; $i--) $hash = ((($hash * 33) & 0xFFFFFFFF) ^ ord($str[$i])) & 0xFFFFFFFF;
         $sign = sprintf('%u', $hash & 0xFFFFFFFF);
         return base_convert($sign, 10, 16);
-    }
-    
-    public function onfFPS0($ua, array $mouse, int $waktu) {
-        
-        return base64_encode(json_encode([
-            'solve_time_ms' => $waktu,
-            'hardware_hash' => $this->browserFingerprint['canvas']['hash'] ?? $this->gen_fphash(),
-            'webdriver' => 0,
-            'mouse_data' => array_values($mouse),
-            'raw' => [
-                'iw' => $this->screenFingerprint['width'] ?? 1920,
-                'ih' => $this->screenFingerprint['height'] ?? 1080,
-                'gl' => $this->webglFingerprint['renderer'] ?? 'ANGLE (NVIDIA, NVIDIA GeForce RTX 3060, OpenGL 4.5)',
-                'sw' => $this->screenFingerprint['availWidth'] ?? 1920,
-                'sh' => $this->screenFingerprint['availHeight'] ?? 1040,
-                'wd' => false,
-                'chr' => true,
-                'ua' => $ua
-            ],
-            #'fingerprint' => $this->browserFingerprint
-        ], JSON_UNESCAPED_SLASHES));
     }
     
     private function parseShortL($ud, $sl) {
