@@ -28,7 +28,7 @@ return (new class {
         $this->api = onKeys();
         $this->domain = parse_url($this->host, PHP_URL_HOST);
         
-        $this->acc = Config::credential(['ua' => fn() => Config::uagent('mobile')], false, ['login', 'PROXY']);
+        $this->acc = Config::credential(['ua' => fn() => Config::uagent('mobile')], false, /*['login', 'PROXY']*/);
         putenv("PROXY=" . $this->acc['PROXY']);
         
         Proxy::load();
@@ -151,18 +151,22 @@ return (new class {
                         
                         $po = null;
                         $this->atbforce = $this->atbfail >= 3;
+                        #_put('fau.html', $fau); die;
                         if (!empty($fau) && $fau !== 99) {
                             $f = Scraper::payload($fau, 'fauform')[0] ?? null;
-                            #var_dump($f); #die;
+                            var_dump($f); #die;
                             
                             if (!empty($f)) {
                                 $pa = $f['payload'];
                                 $_ca = $pa['captcha'] ?? '';
                                 
-                                if  (($_ca === 'advanced_captcha') && isset($pa['fc_token'])) {
-                                    $fcc = $this->_fc($fau,$fa);
-                                    $pa['fc_token'] = $fcc;
+                                /*
+                                if  (($_ca == 'sf_cosmos')) {
+                                    $sfc = $this->sfc($fau, $fa, $_c);
+                                    
+                                    
                                 }
+                                */
                                 
                                 $cre = ['uf' => md5($this->mail), 'ls' => LANGUAGE(), 'utt' => TIMEZONE(), 'wallet' => $this->mail];
                                 
@@ -276,42 +280,17 @@ return (new class {
         
     }
     
-    private function _fc($html, $reff) {
+    private function _sfc($html, $reff, $curr) {
         
-        $task = json_decode(Net::C(
-            $this->host.'/faucetcaptcha/challenge',
-            'GET', null, Inf::$cookie,
-            $this->headersCF, $reff, Inf::$uagent
-        )?: '', 1);
+        $req = json_decode(Net::X("{$host}/cosmos/challenge/faucet_$curr?_=" . (time() * 1000), 'GET', null, Inf::$cookie, $this->headersCF, $reff, Inf::$uagent)?: '', 1);
+        var_dump($req);
         
-        $pow = null;
-        $set = microtime(1);
-        $nonce = $task['nonce'] ?? '';
-        $level = $task['difficulty'] ?? 3;
         
-        if ($nonce && $level) $pow = SolveUtils::Pow($nonce, $level);
         
-        if ($pow) {
-            _sle($ev = rand(1, 3));
-            $end = microtime(1);
-            
-            return base64_encode(json_encode([
-                'n'  => $nonce,
-                'p'  => [
-                    'c' => $pow['nonce'],
-                    'h' => $pow['hash']
-                ],
-                'c'  => cnvs($this->mail, Inf::$uagent),
-                'e'  => ($end - $set) * 1000,
-                'ks' => rand(20, 60),
-                'kc' => rand(10, 21),
-                'ev' => $ev + 5,
-                'ts' => time()
-            ]));
-            
-        }
         
-        return '';
+        
+        die;
+        
     }
     
 })->exec();

@@ -102,7 +102,7 @@ trait Base {
     private function _cf(&$cookieHeader, $url, $html, $force, $ads, $payload) {
         
         $method = (!empty($payload) ? 'POST' : 'GET');
-        #var_dump(Inf::$uagent);
+        #var_dump(Inf::$uagent); #die;
         $cf = Cloudflare::exec($this->api, $url, Inf::$cookie, Inf::$uagent, ['html' => $html, 'payload' => $payload], $force ? 1 : 0);
         
         if (!$cf) return null;
@@ -119,7 +119,7 @@ trait Base {
         Config::resetUA();
         Inf::setup($ua, Inf::$cookie);
         if (empty($hh)) return null;
-        #var_dump(Inf::$uagent);
+        #var_dump(Inf::$uagent); die;
         
         $cookieHeader = Inf::netHead($hh);
         

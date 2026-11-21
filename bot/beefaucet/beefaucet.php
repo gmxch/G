@@ -16,14 +16,18 @@ return (new class {
     ];
     
     private string $r = '/?r=gamamoch@gmail.com';
-    private string $ip = '162.213.248.69';
+    private string $ip = '';
     
     private $mail;
     private $prox;
+    private array $headersCF = [
+        'https://beefaucet.org' => [],
+        'https://claimfreecoins.io' => []
+    ];
     
     public function __construct() {
         $this->api = onKeys();
-        $this->acc = Config::credential([], false, ['login', 'PROXY']);
+        $this->acc = Config::credential(['ua' => fn() => Config::uagent()], false, ['login', 'PROXY']);
         putenv("PROXY=" . ($this->prox = $this->acc['PROXY']));
         
         $this->mail = $this->acc['login'];
@@ -39,7 +43,7 @@ return (new class {
     }
     
     public function exec() {
-        $_ua = Config::uagent();
+        $_ua = $this->acc['ua'];
         $_ck = Config::cookie($this->mail);
         
         $sites = [
@@ -75,7 +79,7 @@ return (new class {
                 
                 while (true) {
                     $rett0++;
-                    $_0 = Net::C($host, 'GET', null, $_coo . '/main', [], '', $_ua, ip: $this->ip, ins: true);
+                    $_0 = Net::C($host, 'GET', null, $_coo . '/main', [], '', $this->acc['ua'], ip: $this->ip, ins: true);
                     if (!empty($_0) && $_0 !== 99) {
                         $_u = Scraper::_xP($_0, "//div[contains(@class, 'dropdown-menu')]//a/@href");
                         
@@ -98,7 +102,10 @@ return (new class {
                     'cookie' => $_coo
                 ];
                 
-                
+                if ($FAST_CLAIM) {
+                    $check = $this->_cff($parsed_sites, $host);
+                    if (!$check) continue;
+                }
                 
             }
             
@@ -112,6 +119,11 @@ return (new class {
                 $_u = $data['urls'];
                 $_coo = $data['cookie'];
                 
+                if (!$FAST_CLAIM) {
+                    $check = $this->_cff($parsed_sites, $host);
+                    if (!$check) continue;
+                }
+                
                 $prep_queue = [];
                 foreach ($_u as $f_u) {
                     $u_nam = basename(parse_url($f_u)['path']);
@@ -124,7 +136,7 @@ return (new class {
                     
                     $prep_queue[$_url] = [
                         $_url, 'GET', null, $u_coo,
-                        [], $host, $_ua, $this->ip,
+                        $this->headersCF[$host], $host, $this->acc['ua'], $this->ip,
                         false, #$this->prox['PROXY']
                     ];
                     
@@ -134,10 +146,11 @@ return (new class {
                     return Mux::C(...array_values($prep_queue));
                 });
                 
+                #var_dump($pages); die;
+                
                 if (!$FAST_CLAIM) {
                     $token = $this->_tK($host, $data['key']);
                     if (empty($token) || $token === null) {
-                        unset($sites[$host]);
                         continue;
                     }
                 }
@@ -156,6 +169,7 @@ return (new class {
                         continue;
                     }
                     
+                   # _put('page.html', $page);
                     $forms = Scraper::payload($page)[0] ?? [];
                     
                     if (empty($forms)) {
@@ -171,7 +185,7 @@ return (new class {
                     
                     $multi_calls[] = [
                         $post_url, 'POST', $pa, $args[3],
-                        [], $_url, $_ua, $this->ip,
+                        $this->headersCF[$host], $_url, $this->acc['ua'], $this->ip,
                         false, #$this->prox['PROXY']
                     ];
                     $coin_map[] = $u_nam;
@@ -231,8 +245,24 @@ return (new class {
     }
     
     public function _tK($rc_U, $rc_K) {
+        #return _rl('token: ') ?? 'token';
         return Solve::tkn($this->api, $rc_U, $rc_K, 'rc2')['done'] ?? null;
     }
+    
+    public function _cff($parsed_sites, $target = 'https://beefaucet.org') {
+        
+        $tgs = $parsed_sites[$target];
+        $tgt = array_rand($tgs['urls']);
+        $tgu = $tgs['urls'][$tgt];
+        
+        $_0 = Net::C($tgu, 'GET', null, null . '/main', $this->headersCF[$target], '', $this->acc['ua'], d: true);
+        #var_dump($_0);
+        
+        $check = $this->checkCF($this->headersCF[$target], $tgu, $_0);
+        #var_dump($check);
+        return $check;
+    }
+    
     
     
 })->exec();
